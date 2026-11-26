@@ -506,6 +506,11 @@ input[type=date]{min-height:42px}
 .hi-main b{font-size:13.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hi-main span{font-size:11.5px;color:var(--faint)}
 .hi-acts{display:flex;align-items:center;gap:6px;flex:none}
+.hist-tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.hist-tools .btn{min-height:44px}
+.hist-msg{min-height:1.2em;margin:10px 2px 0;font-size:13px;color:var(--muted)}
+.hist-msg.ok{color:#027a48}.hist-msg.bad{color:#b42318}
+.num-hint{display:block;margin-top:4px}
 .icon-btn{width:30px;height:30px;border-radius:8px;border:0;background:#f6f7fb;color:#98a2b3;cursor:pointer;font-size:15px;display:grid;place-items:center}
 .icon-btn:hover{background:#fff1f3;color:#d92d20}
 .empty{font-size:13px;color:var(--muted);padding:18px 4px;text-align:center}
@@ -707,7 +712,8 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
       <div class="tb-grid">
         <div class="field">
           <label for="docNumber" id="docNumberLabel">Invoice #</label>
-          <input type="text" id="docNumber" data-bind="docState.number" placeholder="INV-0001" autocomplete="off">
+          <input type="text" id="docNumber" data-bind="docState.number" placeholder="INV-0001" autocomplete="off" aria-describedby="numHint">
+          <span class="hint num-hint" id="numHint">Any format, e.g. INV-0001 or 2026-001. New continues from your highest number.</span>
         </div>
         <div class="field">
           <label for="issueDate">Issue date</label>
@@ -1031,9 +1037,15 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="histTitle">
     <button type="button" class="modal-x" data-close aria-label="Close">&times;</button>
     <h2 id="histTitle" style="margin-top:4px">Saved invoices</h2>
-    <p class="sub">Stored on this device only. Newest first, up to 20.</p>
+    <p class="sub">Stored only in this browser, newest first, up to 20. Clearing your browser data deletes them — we can’t recover them, so back up now and then.</p>
     <div class="hist-list" id="histList"></div>
     <button type="button" class="btn btn-soft btn-block" id="histSaveBtn" style="margin-top:14px">Save current invoice</button>
+    <div class="hist-tools">
+      <button type="button" class="btn btn-ghost" id="backupBtn">Back up (.json)</button>
+      <button type="button" class="btn btn-ghost" id="restoreBtn">Restore backup</button>
+      <input type="file" id="restoreInput" accept="application/json,.json" hidden>
+    </div>
+    <p class="hist-msg" id="histMsg" role="status" aria-live="polite"></p>
   </div>
 </div>
 
@@ -1069,6 +1081,7 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
   const K_PROFILE = 'swiftbill.profile.v1';
   const K_DOC = 'swiftbill.doc.v1';
   const K_HIST = 'swiftbill.history.v1';
+  const MAX_SAVED = 20;
   const BASE_TITLE = 'SwiftBill — Invoice & Quote Maker for Freelancers';
 
   const CURRENCIES = {
@@ -1152,9 +1165,20 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
     return m[1] + next + m[3];
   }
   function nextNumber(current) {
-    let cand = bumpNumber(current);
-    const used = new Set(savedDocs.map(d => d.doc && d.doc.number).filter(Boolean));
-    used.add(current);
+    const cur = String(current || '').trim();
+    const m = cur.match(/^(.*?)(\d+)(\D*)$/);
+    const used = new Set(savedDocs.map(d => d.doc && String(d.doc.number || '').trim()).filter(Boolean));
+    used.add(cur);
+    let cand;
+    if (m) {
+      /* highest number with the same prefix and suffix, among saved invoices and the current one */
+      let max = parseInt(m[2], 10), width = m[2].length;
+      used.forEach(n => {
+        const k = n.match(/^(.*?)(\d+)(\D*)$/);
+        if (k && k[1] === m[1] && k[3] === m[3]) { max = Math.max(max, parseInt(k[2], 10)); width = Math.max(width, k[2].length); }
+      });
+      cand = m[1] + String(max + 1).padStart(width, '0') + m[3];
+    } else cand = bumpNumber(cur);
     let guard = 0;
     while (used.has(cand) && guard++ < 10000) cand = bumpNumber(cand);
     return cand;
@@ -1703,6 +1727,9 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
     $('#mbSave').addEventListener('click', saveCurrent);
     $('#histBtn').addEventListener('click', openHistory);
     $('#histSaveBtn').addEventListener('click', saveCurrent);
+    $('#backupBtn').addEventListener('click', exportBackup);
+    $('#restoreBtn').addEventListener('click', () => { if (!isPro()) { openPro('saved'); return; } $('#restoreInput').click(); });
+    $('#restoreInput').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; restoreBackup(f); });
 
     // pro
     $('#unlockBtn').addEventListener('click', () => openPro('upgrade'));
@@ -1813,19 +1840,17 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
   function saveCurrent() {
     if (!isPro()) { openPro('saved'); return; }
     const c = calc();
-    savedDocs.unshift({
-      id: uid(),
-      savedAt: Date.now(),
-      label: labelFor(docState),
-      total: c.total,
-      currency: docState.currency,
-      doc: clone(docState)
-    });
-    savedDocs = savedDocs.slice(0, 20);
-    save(K_HIST, savedDocs);
+    const num = String(docState.number || '').trim();
+    const prev = num ? savedDocs.find(d => d.doc && String(d.doc.number || '').trim() === num && (d.doc.type || 'invoice') === (docState.type || 'invoice')) : null;
+    const entry = { id: prev ? prev.id : uid(), savedAt: Date.now(), label: labelFor(docState), total: c.total, currency: docState.currency, doc: clone(docState) };
+    const before = savedDocs;
+    savedDocs = [entry].concat(savedDocs.filter(d => d !== prev));
+    const dropped = savedDocs.length > MAX_SAVED ? savedDocs[MAX_SAVED] : null;
+    savedDocs = savedDocs.slice(0, MAX_SAVED);
+    if (!save(K_HIST, savedDocs)) { savedDocs = before; toast('Couldn’t save — this browser is out of storage space.'); return; }
     renderHistory();
     updateChrome();
-    toast('Saved to this device.');
+    toast(prev ? 'Updated saved ' + (num || 'document') + '.' : (dropped ? 'Saved. The oldest saved invoice was removed (limit ' + MAX_SAVED + ').' : 'Saved to this device.'));
   }
   function renderHistory() {
     const box = $('#histList');
@@ -1840,6 +1865,7 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
         + '<div class="hi-main"><b>' + esc(d.label) + '</b><span>' + when + ' · ' + money(d.total, d.currency) + '</span></div>'
         + '<div class="hi-acts">'
         + '<button type="button" class="btn btn-ghost btn-sm" data-load="' + d.id + '">Open</button>'
+        + '<button type="button" class="btn btn-ghost btn-sm" data-dup="' + d.id + '" aria-label="Duplicate ' + esc(d.label) + '">Duplicate</button>'
         + '<button type="button" class="icon-btn" data-remove="' + d.id + '" aria-label="Delete saved invoice">&#215;</button>'
         + '</div></div>';
     }).join('');
@@ -1847,11 +1873,121 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
   function openHistory() {
     if (!isPro()) { openPro('saved'); return; }
     renderHistory();
+    histMsg('', '');
     openModal('histModal');
+  }
+
+  /* ───────────── backup / restore (Pro) — everything stays in the browser ───────────── */
+  function histMsg(text, kind) {
+    const el = $('#histMsg'); if (!el) return;
+    el.textContent = text; el.className = 'hist-msg' + (kind ? ' ' + kind : '');
+  }
+  function exportBackup() {
+    if (!isPro()) { openPro('saved'); return; }
+    const data = {
+      app: 'swiftbill', type: 'backup', version: 1, exportedAt: new Date().toISOString(),
+      profile: clone(profile),          /* business details, logo, signature — no license key */
+      current: clone(docState),
+      invoices: clone(savedDocs)
+    };
+    try {
+      const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'swiftbill-backup-' + isoToday() + '.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      histMsg('Backup created: ' + savedDocs.length + ' saved invoice' + (savedDocs.length === 1 ? '' : 's') + ' and your business details. Keep the file somewhere safe.', 'ok');
+      track('backup-export');
+    } catch (e) {
+      histMsg('Couldn’t create the backup file in this browser.', 'bad');
+    }
+  }
+  function cleanDoc(d) {
+    if (!d || typeof d !== 'object' || Array.isArray(d)) return null;
+    const out = Object.assign(sampleDoc(), {});
+    ['type', 'currency', 'number', 'issueDate', 'terms', 'clientName', 'clientEmail', 'clientAddress', 'taxLabel', 'discountType', 'payInstructions', 'notes', 'template', 'accent']
+      .forEach(k => { if (d[k] != null && typeof d[k] !== 'object') out[k] = String(d[k]).slice(0, 4000); });
+    ['taxRate', 'discountValue'].forEach(k => { if (d[k] != null) out[k] = pos(d[k]); });
+    if (out.type !== 'quote') out.type = 'invoice';
+    if (!CURRENCIES[out.currency]) out.currency = 'USD';
+    if (!Array.isArray(d.items)) return null;
+    out.items = d.items.slice(0, 500).filter(it => it && typeof it === 'object')
+      .map(it => ({ desc: String(it.desc == null ? '' : it.desc).slice(0, 1000), qty: pos(it.qty), rate: pos(it.rate) }));
+    if (!out.items.length) out.items = [{ desc: '', qty: 1, rate: 0 }];
+    return out;
+  }
+  function cleanImage(v) { return (typeof v === 'string' && /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(v) && v.length < 3000000) ? v : ''; }
+  function restoreBackup(file) {
+    if (!isPro()) { openPro('saved'); return; }
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) { histMsg('That file is too large to be a SwiftBill backup.', 'bad'); return; }
+    const reader = new FileReader();
+    reader.onerror = () => histMsg('Couldn’t read that file.', 'bad');
+    reader.onload = () => {
+      let data;
+      try { data = JSON.parse(String(reader.result || '')); } catch (e) { histMsg('That file isn’t a SwiftBill backup (it’s not valid JSON).', 'bad'); return; }
+      if (!data || data.app !== 'swiftbill' || data.type !== 'backup' || !Array.isArray(data.invoices)) { histMsg('That file isn’t a SwiftBill backup.', 'bad'); return; }
+      if (data.version !== 1) { histMsg('This backup was made by a newer version of SwiftBill. Reload the page and try again.', 'bad'); return; }
+      const incoming = [];
+      data.invoices.forEach(x => {
+        const doc = x && cleanDoc(x.doc);
+        if (!doc) return;
+        const c = (function () { const keep = docState; docState = doc; const r = calc(); docState = keep; return r; })();
+        incoming.push({ id: (x.id && /^[a-z0-9]{4,40}$/i.test(String(x.id))) ? String(x.id) : uid(), savedAt: +x.savedAt || Date.now(), label: labelFor(doc), total: c.total, currency: doc.currency, doc: doc });
+      });
+      const skipped = data.invoices.length - incoming.length;
+      const ids = new Set(savedDocs.map(d => d.id));
+      const replaced = incoming.filter(d => ids.has(d.id)).length;
+      const added = incoming.length - replaced;
+      const hasProfile = data.profile && typeof data.profile === 'object';
+      const when = data.exportedAt ? fmtDate(new Date(data.exportedAt)) : 'unknown date';
+      const msg = 'Restore this backup from ' + when + '?\n\n'
+        + '• ' + added + ' invoice' + (added === 1 ? '' : 's') + ' will be added\n'
+        + '• ' + replaced + ' saved invoice' + (replaced === 1 ? '' : 's') + ' with the same ID will be replaced\n'
+        + (hasProfile ? '• Your business details, logo and signature will be replaced\n' : '')
+        + '• Only the newest ' + MAX_SAVED + ' invoices are kept\n\n'
+        + 'Your current invoice in the editor is not changed.';
+      if (!incoming.length && !hasProfile) { histMsg('This backup has no invoices to restore.', 'bad'); return; }
+      if (!confirm(msg)) { histMsg('Restore cancelled. Nothing was changed.', ''); return; }
+      const beforeDocs = savedDocs, beforeProfile = clone(profile);
+      const map = new Map(savedDocs.map(d => [d.id, d]));
+      incoming.forEach(d => map.set(d.id, d));
+      savedDocs = Array.from(map.values()).sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0)).slice(0, MAX_SAVED);
+      if (hasProfile) {
+        const pf = data.profile;
+        ['name', 'email', 'address', 'taxId'].forEach(k => { profile[k] = pf[k] == null ? '' : String(pf[k]).slice(0, 2000); });
+        if (FORMATS[pf.fmt]) profile.fmt = pf.fmt;
+        if (pf.paper === 'a4' || pf.paper === 'letter') profile.paper = pf.paper;
+        profile.logo = cleanImage(pf.logo); profile.signature = cleanImage(pf.signature);
+      }
+      if (!save(K_HIST, savedDocs) || !save(K_PROFILE, profile)) {
+        savedDocs = beforeDocs; profile = beforeProfile; save(K_HIST, savedDocs); save(K_PROFILE, profile);
+        histMsg('Couldn’t restore — this browser is out of storage space. Nothing was changed.', 'bad'); return;
+      }
+      syncUploads(); refreshAll();
+      histMsg('Restored ' + incoming.length + ' invoice' + (incoming.length === 1 ? '' : 's') + (hasProfile ? ' and your business details' : '') + '.' + (skipped ? ' ' + skipped + ' damaged item' + (skipped === 1 ? ' was' : 's were') + ' skipped.' : ''), 'ok');
+      track('backup-restore');
+    };
+    reader.readAsText(file);
   }
   $('#histList') && document.addEventListener('click', e => {
     const loadBtn = e.target.closest('[data-load]');
     const rmBtn = e.target.closest('[data-remove]');
+    const dupBtn = e.target.closest('[data-dup]');
+    if (dupBtn) {
+      const hit = savedDocs.find(d => d.id === dupBtn.dataset.dup);
+      if (!hit) return;
+      const copy = Object.assign(sampleDoc(), clone(hit.doc));
+      if (!Array.isArray(copy.items) || !copy.items.length) copy.items = [{ desc: '', qty: 1, rate: 0 }];
+      copy.number = nextNumber(copy.number || docState.number);   /* continues from the highest saved number with the same format */
+      copy.issueDate = isoToday();
+      docState = copy;
+      renderItems(); syncEditor(); renderSheet(); persistAll(); closeModals();
+      toast('Duplicated as ' + copy.number + ', dated today. Save it to keep it.');
+      track('invoice-duplicated');
+      return;
+    }
     if (loadBtn) {
       const hit = savedDocs.find(d => d.id === loadBtn.dataset.load);
       if (!hit) return;
