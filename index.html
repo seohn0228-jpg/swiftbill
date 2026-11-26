@@ -1047,6 +1047,8 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   const CHECKOUT_URL = 'https://swiftbill4.gumroad.com/l/Pro';
   const GUMROAD_PRODUCT_ID = 'r_D8j14r5tISLeNkBdcCbg==';
   const CUSTOMER_CODES = [];
+  /* owner test key: only its SHA-256 is stored here, the key itself is never in the source */
+  const OWNER_CODE_HASHES = ['019dbb2694c964d5889b69efafd98d1492eb30ffbbe9b888d7df19c9874600c4'];
   const CONTACT_EMAIL = 'swiftbill26@gmail.com';
   const GOATCOUNTER_CODE = '';
   const MAX_DEVICES = 3;
@@ -1910,6 +1912,13 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     err.className = 'code-err';
     if (!code) { err.textContent = 'Enter the license key from your purchase email.'; return; }
     if (CUSTOMER_CODES.indexOf(code.toUpperCase()) !== -1) { grantPro(code.toUpperCase(), 'code'); return; }
+    if (OWNER_CODE_HASHES.length && window.crypto && crypto.subtle) {
+      try {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(code.toUpperCase()));
+        const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        if (OWNER_CODE_HASHES.indexOf(hex) !== -1) { grantPro('owner', 'owner'); return; }
+      } catch (e) {}
+    }
     if (!GUMROAD_PRODUCT_ID) { err.textContent = "That key didn't work. Checkout opens soon."; return; }
     btn.disabled = true; const label = btn.textContent; btn.textContent = 'Checking…';
     try {
