@@ -112,7 +112,7 @@ img{max-width:100%}
 .layout{
   display:grid;gap:22px;
   grid-template-columns:minmax(0,1fr) 588px;
-  grid-template-areas:"toolbar preview" "editor preview";
+  grid-template-areas:"toolbar preview" "editor preview" "foot foot";
   align-items:start;
 }
 
@@ -332,7 +332,7 @@ input[type=date]{min-height:42px}
 .mobile-bar .btn{flex:none}
 
 .app-foot{
-  grid-column:1 / -1;display:flex;align-items:center;justify-content:space-between;gap:16px;
+  grid-area:foot;display:flex;align-items:center;justify-content:space-between;gap:16px;
   flex-wrap:wrap;padding:26px 4px 0;color:var(--faint);font-size:12px;
 }
 .reset-btn{background:none;border:0;padding:0;color:#aab1bf;font-size:11.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
@@ -521,13 +521,21 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
 .export-hint{margin:0;padding:8px 16px;font-size:12px;color:var(--muted);background:#fff;border-bottom:1px solid var(--line)}
 .export-hint b{color:var(--ink-2)}
 .btn.is-disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+.sheet[data-paper="letter"]{width:816px;min-height:1056px}
+.view-tabs{display:none}
+.zoom-btn{display:none}
+.trust-row{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;margin:10px 0 2px;font-size:12px;color:var(--muted)}
+.trust-row span::before{content:"✓ ";color:#12b76a;font-weight:700}
+.foot-links{display:flex;gap:14px;flex-wrap:wrap}
+.foot-links a{color:inherit;text-decoration:underline;text-underline-offset:3px;display:inline-flex;align-items:center;min-height:40px}
+.foot-links a:hover{color:var(--ink-2)}
 
 /* ---------- 7. responsive ---------- */
 @media (max-width:1180px){
   .layout{grid-template-columns:minmax(0,1fr) 520px}
 }
 @media (max-width:1079px){
-  .layout{grid-template-columns:1fr;grid-template-areas:"toolbar" "editor" "preview";gap:14px}
+  .layout{grid-template-columns:1fr;grid-template-areas:"toolbar" "editor" "preview" "foot";gap:14px}
   .preview-panel{position:static}
   .preview-stage{max-height:none;overflow:visible;padding:12px}
   .panel-foot{display:none}
@@ -535,6 +543,20 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   body{padding-bottom:calc(74px + env(safe-area-inset-bottom))}
   .hero{align-items:flex-start;flex-direction:column;gap:10px}
   .hero-note{display:none}
+  .layout{grid-template-areas:"tabs" "toolbar" "editor" "preview" "foot"}
+  body.view-preview .hero{display:none}
+  .view-tabs{
+    grid-area:tabs;display:flex;gap:4px;padding:4px;background:#eef0f7;border-radius:12px;
+    position:sticky;top:calc(var(--header-h) + 6px);z-index:30;box-shadow:0 4px 14px -8px rgba(16,24,40,.35);
+  }
+  .view-tabs button{
+    flex:1;height:42px;border:0;border-radius:9px;background:transparent;font:inherit;font-size:14.5px;font-weight:650;color:#5b6478;cursor:pointer;
+  }
+  .view-tabs button[aria-selected="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(16,24,40,.14)}
+  body.view-preview .toolbar,body.view-preview .editor{display:none}
+  body.view-edit .preview-panel{display:none}
+  .zoom-btn{display:inline-flex}
+  .preview-stage.zoomed{overflow-x:auto;-webkit-overflow-scrolling:touch}
 }
 @media (max-width:860px){
   .tb-grid{grid-template-columns:1fr 1fr}
@@ -583,6 +605,13 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   .modal h2{font-size:21px}
   .app-foot{padding-top:18px;font-size:11.5px}
 }
+@media (max-width:720px){
+  .btn-sm,#newBtn,#logoBtn,#signBtn,#addLine,#mbSave,.chip-btn{min-height:44px}
+  .it-del{width:44px;height:44px}
+  .icon-btn{width:40px;height:40px}
+  .seg button{height:40px}
+  #unlockBtn{height:40px}
+}
 @media (max-width:430px){
   .header-inner{gap:7px}
   .brand-mark{width:28px;height:28px;border-radius:8px}
@@ -599,20 +628,19 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
 }
 
 /* ---------- print ---------- */
-@page{size:A4;margin:15mm 0 12mm}
-@page :first{margin-top:0}
 @media print{
   html,body{background:#fff!important;margin:0!important;padding:0!important;height:auto!important;overflow:visible!important}
   body > *:not(#printRoot){display:none!important}
   #printRoot{display:block!important}
   #printRoot .sheet{
-    width:210mm!important;min-height:285mm!important;margin:0!important;
+    width:210mm!important;min-height:284mm!important;margin:0!important;
     transform:none!important;box-shadow:none!important;border-radius:0!important;
     padding:15mm 15mm 0!important;font-size:13.5px!important;
   }
   #printRoot .sheet *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   #printRoot .s-items tr,#printRoot .s-notes,#printRoot .s-totals{break-inside:avoid}
   #printRoot .s-foot{break-inside:avoid}
+  #printRoot .sheet[data-paper="letter"]{width:215.9mm!important;min-height:266mm!important}
 }
 </style>
 </head>
@@ -628,7 +656,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     </span>
     <span class="brand-tag">Invoice &amp; quote studio</span>
     <div class="header-right">
-      <span class="pill" id="statusPill">1 free export left</span>
+      <span class="pill" id="statusPill">3 free exports left</span>
       <button type="button" class="btn btn-primary btn-sm" id="unlockBtn"><span class="unlock-long">Unlock Pro — $9</span><span class="unlock-short">Pro — $9</span></button>
     </div>
   </div>
@@ -648,6 +676,11 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   </section>
 
   <div class="layout">
+
+    <div class="view-tabs" role="tablist" aria-label="View">
+      <button type="button" role="tab" id="tabEdit" aria-selected="true">Edit</button>
+      <button type="button" role="tab" id="tabPreview" aria-selected="false">Preview</button>
+    </div>
 
     <!-- ── toolbar ─────────────────────────────────────────── -->
     <div class="toolbar" role="group" aria-label="Document settings">
@@ -685,6 +718,21 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
             <option value="CAD">CAD ($)</option>
             <option value="AUD">AUD ($)</option>
             <option value="JPY">JPY (¥)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fmt">Date &amp; number style</label>
+          <select id="fmt" data-bind="profile.fmt">
+            <option value="us">US — Nov 26, 2026 · 1,234.50</option>
+            <option value="uk">UK — 26 Nov 2026 · 1,234.50</option>
+            <option value="eu">Europe — 26.11.2026 · 1.234,50</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="paper">Paper size</label>
+          <select id="paper" data-bind="profile.paper">
+            <option value="a4">A4</option>
+            <option value="letter">US Letter</option>
           </select>
         </div>
       </div>
@@ -889,6 +937,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
         <span class="panel-title">Live preview</span>
         <span class="spacer"></span>
         <span class="chip" id="tplChip">A4 · Classic Minimal</span>
+        <button type="button" class="chip-btn zoom-btn" id="zoomBtn" aria-pressed="false">Zoom</button>
         <button type="button" class="chip-btn" id="histBtn">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
           Saved <span class="count" id="histCount">0</span>
@@ -916,7 +965,13 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     </aside>
 
     <footer class="app-foot">
-      <span>SwiftBill — invoices &amp; quotes for freelancers. Your data stays in this browser.</span>
+      <span>SwiftBill — simple invoicing for freelancers worldwide. Your data stays in this browser.</span>
+      <nav class="foot-links" aria-label="Legal">
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
+        <a href="refund.html">Refunds</a>
+        <a href="mailto:contact@example.com" class="js-contact">Contact</a>
+      </nav>
     </footer>
   </div>
 </main>
@@ -937,22 +992,23 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     <button type="button" class="modal-x" data-close aria-label="Close">&times;</button>
     <span class="pro-eyebrow">SwiftBill Pro</span>
     <h2 id="proTitle">One payment. Yours for good.</h2>
-    <p class="sub" id="proReason">You've used your free export. Unlock the full studio — no subscription, no account.</p>
+    <p class="sub" id="proReason">Unlock the full studio — no subscription, no account.</p>
     <ul class="pro-list">
       <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Unlimited PDF exports — no footer credit</li>
       <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Three templates — Classic, Editorial, Modern Bold</li>
       <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Your logo &amp; signature on every document</li>
       <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Custom accent colours</li>
       <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Save &amp; reopen past invoices on this device</li>
-      <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Works offline, forever</li>
+      <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Use it on up to 3 of your devices</li>
     </ul>
     <div class="price-row"><span class="price">$9</span><span class="price-note">one-time · no subscription</span></div>
     <a class="btn btn-primary btn-block" id="checkoutBtn" target="_blank" rel="noopener">Get Pro — $9</a>
-    <p class="tiny">Secure checkout via Gumroad · Access code sent by email</p>
+    <div class="trust-row"><span>One-time payment</span><span>No subscription</span><span>No account</span><span>Lifetime access to this version</span></div>
+    <p class="tiny">Secure checkout via Gumroad · Your license key is emailed right after purchase.</p>
     <div class="code-block">
-      <label for="codeInput">Already purchased? Enter your access code</label>
+      <label for="codeInput">Already purchased? Enter your license key</label>
       <div class="code-row">
-        <input type="text" id="codeInput" placeholder="PRO-XXXX-XXXX" autocomplete="off" spellcheck="false" aria-describedby="codeErr">
+        <input type="text" id="codeInput" placeholder="XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX" autocomplete="off" spellcheck="false" aria-describedby="codeErr">
         <button type="button" class="btn btn-ghost" id="codeBtn">Unlock</button>
       </div>
       <p class="code-err" id="codeErr" role="alert"></p>
@@ -979,10 +1035,20 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   'use strict';
 
   /* ───────────── constants ───────────── */
-  /* Access code e-mailed to buyers. Change it here when you want to rotate it. */
-  const CUSTOMER_CODES = ['PRO-PCPN-5L6R'];
-  /* Paste the Gumroad product link here once the product exists. Empty = checkout shows "opening soon". */
+  /* ── owner settings ──────────────────────────────────────────
+     CHECKOUT_URL        Gumroad product page (empty = button shows "opening soon")
+     GUMROAD_PRODUCT_ID  Gumroad product ID (product page → Content → License key section)
+     CUSTOMER_CODES      optional manual codes (giveaways). Visible to anyone reading the source — keep empty normally.
+     CONTACT_EMAIL       shown in the footer and Pro window
+     GOATCOUNTER_CODE    visitor counter name from goatcounter.com (empty = off) */
   const CHECKOUT_URL = '';
+  const GUMROAD_PRODUCT_ID = '';
+  const CUSTOMER_CODES = [];
+  const CONTACT_EMAIL = 'contact@example.com';
+  const GOATCOUNTER_CODE = '';
+  const MAX_DEVICES = 3;
+  const FREE_PER_MONTH = 3;
+  const RECHECK_MS = 7 * 24 * 60 * 60 * 1000;
   const FREE_RETRY_MS = 30 * 60 * 1000; /* same document can be re-exported for 30 min (e.g. print window was cancelled) */
 
   const K_FLAGS = 'swiftbill.flags.v1';
@@ -1041,7 +1107,23 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     const d = s ? new Date(s + 'T00:00:00') : new Date();
     return isNaN(d.getTime()) ? new Date() : d;
   }
+  const FORMATS = { us: 'en-US', uk: 'en-GB', eu: 'de-DE' };
+  function guessFmt() {
+    const l = (navigator.language || 'en-US').toLowerCase();
+    if (l === 'en-us' || l === 'en-ca' || l === 'en-ph') return 'us';
+    if (/^en/.test(l)) return 'uk';
+    if (/^(de|fr|es|it|nl|pt|pl|da|sv|nb|no|fi|cs|sk|sl|hr|ro|hu|el|tr|ru|uk|id|vi)/.test(l)) return 'eu';
+    return 'uk';
+  }
+  function guessPaper() {
+    const l = (navigator.language || '').toLowerCase();
+    return /^(en-us|en-ca|es-mx|en-ph|es-us)$/.test(l) ? 'letter' : 'a4';
+  }
+  const curFmt = () => FORMATS[profile.fmt] ? profile.fmt : 'uk';
   function fmtDate(d) {
+    const f = curFmt();
+    if (f === 'us') return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    if (f === 'eu') return String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + d.getFullYear();
     return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   }
   function trimNum(n) {
@@ -1072,6 +1154,8 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
       email: '',
       address: '',
       taxId: '',
+      fmt: guessFmt(),
+      paper: guessPaper(),
       logo: '',
       signature: ''
     };
@@ -1098,8 +1182,12 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     };
   }
 
-  let flags = Object.assign({ freeExportUsed: false, pro: false, freeKey: '', freeAt: 0 }, load(K_FLAGS, {}));
-  delete flags.admin;
+  let flags = Object.assign({ pro: false, month: '', used: 0, lastKey: '', lastAt: 0, license: '', src: '', checkedAt: 0 }, load(K_FLAGS, {}));
+  delete flags.admin; delete flags.freeExportUsed; delete flags.freeKey; delete flags.freeAt;
+  const monthKey = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+  function rollMonth() { if (flags.month !== monthKey()) { flags.month = monthKey(); flags.used = 0; } }
+  rollMonth();
+  const freeLeft = () => Math.max(0, FREE_PER_MONTH - (flags.used || 0));
   let profile = Object.assign(sampleProfile(), load(K_PROFILE, {}));
   let docState = Object.assign(sampleDoc(), load(K_DOC, {}));
   let savedDocs = load(K_HIST, []);
@@ -1109,10 +1197,21 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   const isPro = () => !!flags.pro;
 
   /* ───────────── money & math ───────────── */
+  const nfCache = {};
   function money(n, cur) {
-    const c = CURRENCIES[cur || docState.currency] || CURRENCIES.USD;
-    const v = Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: c.dec, maximumFractionDigits: c.dec });
-    return c.symbol + v;
+    const code = CURRENCIES[cur || docState.currency] ? (cur || docState.currency) : 'USD';
+    const c = CURRENCIES[code];
+    const loc = FORMATS[curFmt()];
+    const key = loc + code;
+    if (!nfCache[key]) {
+      const o = { style: 'currency', currency: code, minimumFractionDigits: c.dec, maximumFractionDigits: c.dec };
+      try { nfCache[key] = new Intl.NumberFormat(loc, Object.assign({ currencyDisplay: 'narrowSymbol' }, o)); }
+      catch (e) {
+        try { nfCache[key] = new Intl.NumberFormat(loc, o); }
+        catch (e2) { nfCache[key] = { format: v => c.symbol + v.toFixed(c.dec) }; }
+      }
+    }
+    return nfCache[key].format(Math.abs(n)).replace(/\u00a0/g, ' ');
   }
   function calc() {
     const totals = docState.items.map(lineTotal);
@@ -1240,9 +1339,22 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   function renderSheet() {
     const sheet = $('#sheet');
     sheet.setAttribute('data-tpl', effTpl());
+    sheet.setAttribute('data-paper', profile.paper === 'letter' ? 'letter' : 'a4');
+    applyPageCss();
     sheet.style.setProperty('--accent', effAccent());
     sheet.innerHTML = sheetHTML();
     requestAnimationFrame(fit);
+  }
+
+  function applyPageCss() {
+    let el = document.getElementById('pageCss');
+    if (!el) { el = document.createElement('style'); el.id = 'pageCss'; document.head.appendChild(el); }
+    const size = profile.paper === 'letter' ? 'letter' : 'A4';
+    const label = ((isQuote() ? 'Quote ' : 'Invoice ') + (docState.number || '')).replace(/["\\\n\r]/g, '').trim();
+    const css = '@page{size:' + size + ';margin:15mm 0 12mm;'
+      + '@bottom-right{content:"' + label + '  ·  Page " counter(page) " of " counter(pages);font:8pt -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#98a2b3;margin-right:15mm}}'
+      + '@page :first{margin-top:0}';
+    if (el.textContent !== css) el.textContent = css;
   }
 
   /* ───────────── preview scaling ───────────── */
@@ -1253,7 +1365,8 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     const cs = getComputedStyle(stage);
     const avail = stage.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
     if (avail <= 0) return;
-    const scale = Math.min(1, avail / 794);
+    const zoomed = stage.classList.contains('zoomed');
+    const scale = zoomed ? 1 : Math.min(1, avail / (sheet.offsetWidth || 794));
     sheet.style.transform = 'scale(' + scale + ')';
     const h = sheet.offsetHeight * scale;
     stage.style.height = Math.ceil(h + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)) + 'px';
@@ -1343,14 +1456,18 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     $('#mbTotal').textContent = money(c.total);
     const d = dueDate();
     $('#dueHint').textContent = (isQuote() ? 'Valid until ' : 'Due ') + fmtDate(d);
-    $('#tplChip').textContent = 'A4 · ' + TEMPLATES[effTpl()];
+    $('#tplChip').textContent = (profile.paper === 'letter' ? 'Letter' : 'A4') + ' · ' + TEMPLATES[effTpl()];
   }
 
   function updateChrome() {
     const pill = $('#statusPill');
     if (flags.pro) { pill.textContent = 'Pro · Unlimited'; pill.className = 'pill pill-pro'; }
-    else if (flags.freeExportUsed) { pill.textContent = 'Free export used'; pill.className = 'pill pill-warn'; }
-    else { pill.textContent = '1 free export left'; pill.className = 'pill'; }
+    else {
+      rollMonth();
+      const left = freeLeft();
+      if (!left) { pill.textContent = 'Free exports used this month'; pill.className = 'pill pill-warn'; }
+      else { pill.textContent = left + ' free export' + (left === 1 ? '' : 's') + ' left'; pill.className = 'pill'; }
+    }
 
     $('#unlockBtn').hidden = isPro();
     $('#histCount').textContent = String(savedDocs.length);
@@ -1386,7 +1503,7 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
       return '<div class="item-row" data-idx="' + i + '">'
         + '<div class="it-desc"><input type="text" data-field="desc" value="' + esc(it.desc) + '" placeholder="' + (i === 0 ? 'e.g. Website design — 5 pages' : 'Description of work') + '" aria-label="Item ' + (i + 1) + ' description" autocomplete="off"></div>'
         + '<div class="it-qty"><label>Qty</label><input type="number" data-field="qty" value="' + esc(pos(it.qty)) + '" min="0" step="0.25" inputmode="decimal" aria-label="Item ' + (i + 1) + ' quantity"></div>'
-        + '<div class="it-rate"><label>Rate</label><input type="number" data-field="rate" value="' + esc(pos(it.rate)) + '" min="0" step="0.01" inputmode="decimal" aria-label="Item ' + (i + 1) + ' rate"></div>'
+        + '<div class="it-rate"><label>Rate</label><input type="number" data-field="rate" value="' + esc(pos(it.rate)) + '" min="0" step="' + (decOf(docState.currency) ? '0.01' : '1') + '" inputmode="decimal" aria-label="Item ' + (i + 1) + ' rate"></div>'
         + '<div class="it-amt"><span class="it-lbl">Amount</span><b data-amt="' + i + '">' + money(lt) + '</b></div>'
         + '<button type="button" class="it-del" data-del="' + i + '" aria-label="Remove item ' + (i + 1) + '">&times;</button>'
         + '</div>';
@@ -1431,6 +1548,8 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
       const el = e.target.closest('[data-bind]');
       if (!el) return;
       setPath(el.dataset.bind, el.value);
+      if (el.id === 'currency' || el.id === 'fmt') renderItems();
+      if (el.id === 'fmt' || el.id === 'paper') { renderHistory(); requestAnimationFrame(fit); }
       if (el.id === 'discountType') $('#discountValueLabel').textContent = el.value === 'fixed'
         ? 'Discount amount (' + (CURRENCIES[docState.currency] || CURRENCIES.USD).symbol + ')'
         : 'Discount (%)';
@@ -1637,21 +1756,31 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     const pf = { name: profile.name, email: profile.email, address: profile.address, taxId: profile.taxId };
     return JSON.stringify([d, pf]);
   }
+  function track(path) {
+    try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: path, title: path, event: true }); } catch (e) {}
+  }
   function onExport() {
-    if (isPro()) { doPrint(); return; }
-    if (flags.freeExportUsed && flags.freeKey === docKey() && Date.now() - (flags.freeAt || 0) < FREE_RETRY_MS) {
-      doPrint(); return; /* same document again (print window was closed) — doesn't use anything */
+    if (isPro()) { doPrint(); track('export-pro'); return; }
+    rollMonth();
+    const key = docKey();
+    if (flags.used > 0 && flags.lastKey === key && Date.now() - (flags.lastAt || 0) < FREE_RETRY_MS) {
+      doPrint(); return; /* same document again (print window was closed) — doesn't count */
     }
-    if (!flags.freeExportUsed) {
-      flags.freeExportUsed = true;
-      flags.freeKey = docKey();
-      flags.freeAt = Date.now();
+    if (freeLeft() > 0) {
+      flags.used = (flags.used || 0) + 1;
+      flags.lastKey = key;
+      flags.lastAt = Date.now();
       save(K_FLAGS, flags);
       updateChrome();
       renderSheet();
       doPrint();
-      setTimeout(() => toast('Free export used. Closed the print window? Export this same document again within 30 min.'), 600);
+      track('export-free');
+      const left = freeLeft();
+      setTimeout(() => toast(left
+        ? left + ' free export' + (left === 1 ? '' : 's') + ' left this month. Closed the print window? Export the same document again within 30 min — it won\'t count.'
+        : 'That was your last free export this month. Closed the print window? Export the same document again within 30 min.'), 600);
     } else {
+      track('limit-hit');
       openPro('limit');
     }
   }
@@ -1685,8 +1814,8 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
       return;
     }
     box.innerHTML = savedDocs.map(d => {
-      const when = new Date(d.savedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) + ' · '
-        + new Date(d.savedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      const when = fmtDate(new Date(d.savedAt)) + ' · '
+        + new Date(d.savedAt).toLocaleTimeString(curFmt() === 'us' ? 'en-US' : 'en-GB', { hour: '2-digit', minute: '2-digit' });
       return '<div class="hist-item">'
         + '<div class="hi-main"><b>' + esc(d.label) + '</b><span>' + when + ' · ' + money(d.total, d.currency) + '</span></div>'
         + '<div class="hi-acts">'
@@ -1720,8 +1849,8 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   /* ───────────── modals ───────────── */
   let lastFocus = null;
   const REASONS = {
-    upgrade: "You've used your free export. Unlock the full studio — no subscription, no account.",
-    limit: "You've used your free export. Pro removes the credit and unlocks everything below.",
+    upgrade: 'Unlock the full studio — no subscription, no account.',
+    limit: "You've used this month's 3 free exports. Pro gives you unlimited exports without the credit, plus everything below.",
     templates: 'Custom templates are part of Pro. Switch between three layouts made for real client work.',
     design: 'Logo, signature and accent colours are part of Pro.',
     saved: 'Saving and reopening invoices is part of Pro.'
@@ -1754,23 +1883,100 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModals(); });
   $$('[data-close]').forEach(b => b.addEventListener('click', closeModals));
 
-  function tryCode(raw) {
-    const code = String(raw || '').trim().toUpperCase();
+  async function gumroadVerify(key, increment) {
+    const body = new URLSearchParams({ product_id: GUMROAD_PRODUCT_ID, license_key: key, increment_uses_count: increment ? 'true' : 'false' });
+    const res = await fetch('https://api.gumroad.com/v2/licenses/verify', { method: 'POST', body: body });
+    let j = {};
+    try { j = await res.json(); } catch (e) {}
+    if (!j || !j.success) return { ok: false, notFound: res.status === 404 || (j && j.success === false) };
+    const p = j.purchase || {};
+    if (p.refunded || p.chargebacked || p.disputed) return { ok: false, revoked: true };
+    return { ok: true, uses: +j.uses || 0 };
+  }
+  function grantPro(key, src) {
+    flags.pro = true; flags.license = key; flags.src = src; flags.checkedAt = Date.now();
+    save(K_FLAGS, flags);
+    closeModals(); syncEditor(); renderItems(); renderSheet(); updateChrome();
+    toast('Pro unlocked — unlimited exports, no credit.');
+    track('pro-unlocked');
+  }
+  async function tryCode(raw) {
+    const code = String(raw || '').trim();
     const err = $('#codeErr');
+    const btn = $('#codeBtn');
     err.className = 'code-err';
-    if (!code) { err.textContent = 'Enter the access code from your purchase email.'; return; }
-    if (CUSTOMER_CODES.indexOf(code) !== -1) {
-      flags.pro = true;
-      save(K_FLAGS, flags);
-      closeModals(); syncEditor(); renderSheet();
-      toast('Pro unlocked — unlimited exports, no credit.');
-      return;
+    if (!code) { err.textContent = 'Enter the license key from your purchase email.'; return; }
+    if (CUSTOMER_CODES.indexOf(code.toUpperCase()) !== -1) { grantPro(code.toUpperCase(), 'code'); return; }
+    if (!GUMROAD_PRODUCT_ID) { err.textContent = "That key didn't work. Checkout opens soon."; return; }
+    btn.disabled = true; const label = btn.textContent; btn.textContent = 'Checking…';
+    try {
+      const same = flags.license === code;
+      const r = await gumroadVerify(code, false);
+      if (!r.ok) {
+        err.textContent = r.revoked
+          ? 'This license was refunded or cancelled. Questions? ' + CONTACT_EMAIL
+          : "That license key wasn't found. Copy it exactly from your Gumroad receipt.";
+        return;
+      }
+      if (!same && r.uses >= MAX_DEVICES) {
+        err.textContent = 'This key is already active on ' + MAX_DEVICES + ' devices. Changed devices? Email ' + CONTACT_EMAIL + '.';
+        return;
+      }
+      if (!same) { try { await gumroadVerify(code, true); } catch (e) {} }
+      grantPro(code, 'gumroad');
+    } catch (e) {
+      err.textContent = "Couldn't reach the license server. Check your connection and try again.";
+    } finally {
+      btn.disabled = false; btn.textContent = label;
     }
-    err.textContent = "That code didn't work. Check your purchase email and try again.";
+  }
+  /* re-check a Gumroad key once a week so refunded keys stop working; offline = keep Pro */
+  async function recheckLicense() {
+    if (!flags.pro || flags.src !== 'gumroad' || !GUMROAD_PRODUCT_ID || !flags.license) return;
+    if (Date.now() - (flags.checkedAt || 0) < RECHECK_MS) return;
+    try {
+      const r = await gumroadVerify(flags.license, false);
+      if (r.ok) { flags.checkedAt = Date.now(); save(K_FLAGS, flags); return; }
+      if (r.revoked || r.notFound) {
+        flags.pro = false; flags.src = ''; save(K_FLAGS, flags);
+        syncEditor(); renderItems(); renderSheet(); updateChrome();
+        toast('Your Pro license is no longer active.');
+      }
+    } catch (e) {}
+  }
+
+  /* ───────────── view tabs (phones) ───────────── */
+  function setView(v) {
+    document.body.classList.toggle('view-preview', v === 'preview');
+    document.body.classList.toggle('view-edit', v !== 'preview');
+    $('#tabEdit').setAttribute('aria-selected', String(v !== 'preview'));
+    $('#tabPreview').setAttribute('aria-selected', String(v === 'preview'));
+    requestAnimationFrame(fit);
+    window.scrollTo({ top: 0 });
+  }
+
+  function loadAnalytics() {
+    if (!GOATCOUNTER_CODE) return;
+    const sc = document.createElement('script');
+    sc.async = true;
+    sc.src = 'https://gc.zgo.at/count.js';
+    sc.setAttribute('data-goatcounter', 'https://' + GOATCOUNTER_CODE + '.goatcounter.com/count');
+    document.head.appendChild(sc);
   }
 
   /* ───────────── boot ───────────── */
   function boot() {
+    $('#tabEdit').addEventListener('click', () => setView('edit'));
+    $('#tabPreview').addEventListener('click', () => setView('preview'));
+    $('#zoomBtn').addEventListener('click', () => {
+      const st = $('#stage');
+      const on = st.classList.toggle('zoomed');
+      $('#zoomBtn').setAttribute('aria-pressed', String(on));
+      $('#zoomBtn').textContent = on ? 'Fit' : 'Zoom';
+      fit();
+    });
+    $$('.js-contact').forEach(a => { a.href = 'mailto:' + CONTACT_EMAIL; });
+    document.body.classList.add('view-edit');
     renderTemplates();
     renderSwatches();
     bindEvents();
@@ -1782,6 +1988,8 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
     // fonts/layout settle
     setTimeout(fit, 120);
     setTimeout(fit, 600);
+    loadAnalytics();
+    recheckLicense();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
