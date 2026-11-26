@@ -523,6 +523,12 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
 .export-hint{margin:0;padding:8px 16px;font-size:12px;color:var(--muted);background:#fff;border-bottom:1px solid var(--line)}
 .export-hint b{color:var(--ink-2)}
 .btn.is-disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+/* iOS Safari: date inputs ignore width and overflow grid cells */
+.tb-grid > .field,.grid2 > .field{min-width:0}
+input[type=date]{display:block;width:100%;min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;text-align:left}
+input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0}
+input[type=date]::-webkit-calendar-picker-indicator{margin-left:auto}
+select{min-width:0;max-width:100%;text-overflow:ellipsis}
 .sheet[data-paper="letter"]{width:816px;min-height:1056px}
 .view-tabs{display:none}
 .zoom-btn{display:none}
@@ -725,9 +731,9 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
         <div class="field">
           <label for="fmt">Date &amp; number style</label>
           <select id="fmt" data-bind="profile.fmt">
-            <option value="us">US — Nov 26, 2026 · 1,234.50</option>
-            <option value="uk">UK — 26 Nov 2026 · 1,234.50</option>
-            <option value="eu">Europe — 26.11.2026 · 1.234,50</option>
+            <option value="us">US · Nov 26 · 1,234.50</option>
+            <option value="uk">UK · 26 Nov · 1,234.50</option>
+            <option value="eu">EU · 26.11. · 1.234,50</option>
           </select>
         </div>
         <div class="field">
