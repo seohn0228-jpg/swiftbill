@@ -973,7 +973,7 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
           Export PDF
         </button>
       </div>
-      <p class="export-hint">Export opens your print window — choose <b>Save as PDF</b> as the printer.</p>
+      <p class="export-hint" id="exportHint">Export opens your print window — choose <b>Save as PDF</b> as the printer.</p>
       <div class="preview-stage" id="stage">
         <div class="sheet" id="sheet" data-tpl="classic" style="--accent:#4f46e5"></div>
       </div>
@@ -1006,7 +1006,7 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="proTitle">
     <button type="button" class="modal-x" data-close aria-label="Close">&times;</button>
     <span class="pro-eyebrow">SwiftBill Pro</span>
-    <h2 id="proTitle">One payment. Yours for good.</h2>
+    <h2 id="proTitle">One payment. Lifetime access to this version.</h2>
     <p class="sub" id="proReason">Unlock the full studio — no subscription, no account.</p>
     <ul class="pro-list">
       <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Unlimited PDF exports — no footer credit</li>
@@ -1015,6 +1015,7 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
       <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Custom accent colours</li>
       <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Save &amp; reopen past invoices on this device</li>
       <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Use it on up to 3 of your devices</li>
+      <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Duplicate invoices, back up &amp; restore to another device</li>
     </ul>
     <span class="launch-tag">Launch price · 40% off</span>
     <div class="price-row"><span class="price">$9</span><span class="price-note">one-time · no subscription</span></div>
@@ -2203,6 +2204,9 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
       fit();
     });
     $$('.js-contact').forEach(a => { a.href = 'mailto:' + CONTACT_EMAIL; });
+    /* iPhone / iPad Safari: the print sheet has no "Save as PDF" printer; the PDF is saved from the Share button */
+    const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (ios && $('#exportHint')) $('#exportHint').innerHTML = 'On iPhone/iPad: tap <b>Export PDF</b>, then tap the <b>Share</b> icon in the print options and choose <b>Save to Files</b>.';
     document.body.classList.add('view-edit');
     renderTemplates();
     renderSwatches();
