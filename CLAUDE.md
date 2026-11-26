@@ -9,3 +9,4 @@
 - 무료: 한 달 PDF 3회(2026-11-26 대표 결정). Pro: 검롯 라이선스 키, 기기 3대까지.
 - 가격: 출시 기념가 $9(정가 $15). 화면에는 정가 대신 "40% 할인"으로 표시(2026-11-26 대표 결정, 검롯이 손님 나라 돈으로 바꿔 보여 줘서 줄 그은 $15와 섞이지 않게). 첫 구매 20건 또는 1~2달 뒤 12~15달러로 올릴지 정함.
 - 검롯: 상품 SwiftBill Pro(id r_D8j14r5tISLeNkBdcCbg==, https://swiftbill4.gumroad.com/l/Pro, 계정 swiftbill26). 맞춤 랜딩 페이지 = marketing/landing.html, 2026-11-26 공개. 고칠 때 검롯 CLI(go로 빌드, 키는 환경 네트워크 시크릿 api.gumroad.com)로 page preview → publish → 실제 페이지에서 구매 버튼 눌러 결제 화면 확인. 되돌리기: products page clear.
+- 방문 통계: GoatCounter(쿠키 없음, IP 저장 안 함, 추적 거부·GPC 브라우저는 안 셈). index.html `GOATCOUNTER_CODE`에 대표가 가입한 이름을 넣으면 켜짐. 이벤트: export-free, export-pro, limit-hit, pro-window-*, checkout-click, pro-unlocked(인보이스 내용·키는 안 보냄). 결제 링크에 utm 꼬리표가 이어 붙음. 홍보 링크는 marketing/utm-links.md. **방문·클릭은 GoatCounter, 검롯 페이지 방문·구매·전환율은 검롯 Analytics 숫자만 쓴다(클릭 ≠ 구매).**

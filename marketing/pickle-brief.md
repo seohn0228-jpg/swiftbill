@@ -26,16 +26,19 @@ Pro
 - 구매 후 7일 안 전액 환불
 - 결제: Gumroad, 라이선스 키는 구매 직후 화면과 메일로 받음
 
-## 3. 링크 (곳마다 꼬리표를 바꿔서 쓸 것)
-- 기본 사이트: https://seohn0228-jpg.github.io/swiftbill/
-- 레딧: https://seohn0228-jpg.github.io/swiftbill/?ref=reddit
-- 인디해커스: https://seohn0228-jpg.github.io/swiftbill/?ref=indiehackers
-- 프로덕트 헌트: https://seohn0228-jpg.github.io/swiftbill/?ref=producthunt
-- X(트위터): https://seohn0228-jpg.github.io/swiftbill/?ref=x
-- 스레드: https://seohn0228-jpg.github.io/swiftbill/?ref=threads
+## 3. 링크 (곳마다 아래 링크를 그대로 쓸 것, 어디서 왔는지 구분됨)
+- 레딧: https://seohn0228-jpg.github.io/swiftbill/?utm_source=reddit&utm_medium=social&utm_campaign=launch
+- X(트위터): https://seohn0228-jpg.github.io/swiftbill/?utm_source=x&utm_medium=social&utm_campaign=launch
+- 스레드: https://seohn0228-jpg.github.io/swiftbill/?utm_source=threads&utm_medium=social&utm_campaign=launch
+- 인디해커스: https://seohn0228-jpg.github.io/swiftbill/?utm_source=indiehackers&utm_medium=community&utm_campaign=launch
+- 프로덕트 헌트: https://seohn0228-jpg.github.io/swiftbill/?utm_source=producthunt&utm_medium=launch_site&utm_campaign=launch
+- 구글 광고(쓸 경우): https://seohn0228-jpg.github.io/swiftbill/?utm_source=google&utm_medium=cpc&utm_campaign=search_ads
+- 뉴스레터·메일: https://seohn0228-jpg.github.io/swiftbill/?utm_source=newsletter&utm_medium=email&utm_campaign=launch
+- 직접 보낸 메시지(DM): https://seohn0228-jpg.github.io/swiftbill/?utm_source=dm&utm_medium=direct&utm_campaign=launch
 - 검롯 상품 페이지(직접 결제용, 필요할 때만): https://swiftbill4.gumroad.com/l/Pro
 - 문의: swiftbill26@gmail.com
 - 글 하나에 링크는 되도록 1개(사이트 링크). 사이트 안에서 Pro를 살 수 있다.
+- 방문자 수·구매자 수를 지어내지 말 것. 숫자는 대표가 준 실제 숫자만 쓴다.
 
 ## 4. 쓰면 안 되는 말
 - 확인 안 된 경쟁사 가격·이름 ("$15/mo", "$30 every month", "Invoice Simple보다 싸다" 등)
@@ -81,7 +84,7 @@ SwiftBill Pro is a one-time $9 launch price (40% off), no subscription:
 - Save and reopen up to 20 invoices on your device
 - Works on up to 3 of your devices
 
-Try it here: https://seohn0228-jpg.github.io/swiftbill/?ref=reddit
+Try it here: https://seohn0228-jpg.github.io/swiftbill/?utm_source=reddit&utm_medium=social&utm_campaign=launch
 
 I'd love honest feedback from fellow freelancers and makers — the layout, currencies, or anything that feels missing.
 

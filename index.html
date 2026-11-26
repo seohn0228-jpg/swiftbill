@@ -9,6 +9,7 @@
 <meta property="og:title" content="SwiftBill — Invoice &amp; Quote Maker for Freelancers">
 <meta property="og:description" content="Professional invoices and quotes in under a minute. Free to try, Pro is a one-time $9 launch price.">
 <meta property="og:type" content="website">
+<link rel="canonical" href="https://seohn0228-jpg.github.io/swiftbill/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%234f46e5'/%3E%3Cpath d='M36 10 18 35h10l-2 19 19-26H34l2-18z' fill='%23fff'/%3E%3C/svg%3E">
 <style>
 /* ============================================================
@@ -1703,7 +1704,10 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
     $('#codeBtn').addEventListener('click', () => tryCode($('#codeInput').value));
     $('#codeInput').addEventListener('keydown', e => { if (e.key === 'Enter') tryCode(e.target.value); });
     const co = $('#checkoutBtn');
-    if (CHECKOUT_URL) co.setAttribute('href', CHECKOUT_URL);
+    if (CHECKOUT_URL) {
+      co.setAttribute('href', checkoutHref());
+      co.addEventListener('click', () => track('checkout-click'));
+    }
     else {
       co.removeAttribute('href');
       co.setAttribute('aria-disabled', 'true');
@@ -1867,6 +1871,7 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
     saved: 'Saving and reopening invoices is part of Pro.'
   };
   function openPro(reason) {
+    track('pro-window-' + (REASONS[reason] ? reason : 'open'));
     const el = $('#proModal');
     if (reason && REASONS[reason]) $('#proReason').textContent = REASONS[reason];
     $('#codeErr').textContent = '';
@@ -1973,8 +1978,36 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
     window.scrollTo({ top: 0 });
   }
 
+  /* Visitor stats (GoatCounter): no cookies, no invoice data, no license keys.
+     Skipped when the browser asks not to be tracked (Do Not Track / Global Privacy Control). */
+  function trackingAllowed() {
+    try { if (navigator.doNotTrack === '1' || window.doNotTrack === '1' || navigator.globalPrivacyControl === true) return false; } catch (e) {}
+    return true;
+  }
+  /* channel the visitor came from (utm_source etc.), remembered for this tab only, passed on to the Gumroad checkout link */
+  const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign'];
+  function readUtm() {
+    let u = {};
+    try {
+      const q = new URLSearchParams(location.search);
+      UTM_KEYS.forEach(k => { const v = (q.get(k) || '').trim(); if (v && /^[\w.\-]{1,60}$/.test(v)) u[k] = v; });
+      if (!u.utm_source) { const r = (q.get('ref') || '').trim(); if (r && /^[\w.\-]{1,60}$/.test(r)) u.utm_source = r; }
+      if (Object.keys(u).length) sessionStorage.setItem('swiftbill.utm', JSON.stringify(u));
+      else u = JSON.parse(sessionStorage.getItem('swiftbill.utm') || '{}') || {};
+    } catch (e) {}
+    return u;
+  }
+  function checkoutHref() {
+    if (!CHECKOUT_URL) return '';
+    const u = readUtm();
+    const q = new URLSearchParams();
+    q.set('utm_source', u.utm_source || 'swiftbill');
+    q.set('utm_medium', u.utm_source ? (u.utm_medium || 'referral') : 'site');
+    q.set('utm_campaign', u.utm_campaign || 'pro_window');
+    return CHECKOUT_URL + (CHECKOUT_URL.indexOf('?') === -1 ? '?' : '&') + q.toString();
+  }
   function loadAnalytics() {
-    if (!GOATCOUNTER_CODE) return;
+    if (!GOATCOUNTER_CODE || !trackingAllowed()) return;
     const sc = document.createElement('script');
     sc.async = true;
     sc.src = 'https://gc.zgo.at/count.js';
