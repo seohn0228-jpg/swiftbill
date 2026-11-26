@@ -8,3 +8,4 @@
 - 문의 메일: swiftbill26@gmail.com (index.html `CONTACT_EMAIL`과 정책 페이지 3개에 들어 있음). 환불: 구매 후 7일 안 전액(2026-11-26 대표 결정).
 - 무료: 한 달 PDF 3회(2026-11-26 대표 결정). Pro: 검롯 라이선스 키, 기기 3대까지.
 - 가격: 출시 기념가 $9, 정가 $15 표시(2026-11-26 대표 결정). 첫 구매 20건 또는 1~2달 뒤 12~15달러로 올릴지 정함.
+- 검롯: 상품 SwiftBill Pro(id r_D8j14r5tISLeNkBdcCbg==, https://swiftbill4.gumroad.com/l/Pro, 계정 swiftbill26). 맞춤 랜딩 페이지 = marketing/landing.html, 2026-11-26 공개. 고칠 때 검롯 CLI(go로 빌드, 키는 환경 네트워크 시크릿 api.gumroad.com)로 page preview → publish → 실제 페이지에서 구매 버튼 눌러 결제 화면 확인. 되돌리기: products page clear.
