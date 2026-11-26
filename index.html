@@ -7,7 +7,7 @@
 <meta name="description" content="Create a crisp, professional invoice or quote in under a minute. Six currencies, live preview, print-perfect PDF. No account, no uploads — everything stays in your browser.">
 <meta name="theme-color" content="#ffffff">
 <meta property="og:title" content="SwiftBill — Invoice &amp; Quote Maker for Freelancers">
-<meta property="og:description" content="Professional invoices and quotes in under a minute. Free to try, $9 once for Pro.">
+<meta property="og:description" content="Professional invoices and quotes in under a minute. Free to try, Pro is a one-time $9 launch price.">
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%234f46e5'/%3E%3Cpath d='M36 10 18 35h10l-2 19 19-26H34l2-18z' fill='%23fff'/%3E%3C/svg%3E">
 <style>
@@ -486,6 +486,8 @@ input[type=date]{min-height:42px}
 .price-row{display:flex;align-items:baseline;gap:8px;margin-bottom:12px}
 .price{font-size:30px;font-weight:800;letter-spacing:-.03em}
 .price-note{font-size:12.5px;color:var(--faint)}
+.price-was{font-size:17px;font-weight:600;color:var(--faint);text-decoration:line-through}
+.launch-tag{display:inline-block;font-size:11px;font-weight:750;letter-spacing:.04em;color:#b54708;background:#fff4ed;border-radius:999px;padding:3px 9px;margin-bottom:6px}
 .modal .tiny{font-size:11.5px;color:var(--faint);text-align:center;margin-top:10px;line-height:1.5}
 .code-block{margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
 .code-block label{display:block;font-size:12px;font-weight:650;color:#5b6478;margin-bottom:7px}
@@ -1001,7 +1003,8 @@ body.is-modal .toast.show{transform:translate(-50%,0)}
       <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Save &amp; reopen past invoices on this device</li>
       <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Use it on up to 3 of your devices</li>
     </ul>
-    <div class="price-row"><span class="price">$9</span><span class="price-note">one-time · no subscription</span></div>
+    <span class="launch-tag">Launch price</span>
+    <div class="price-row"><span class="price">$9</span><span class="price-was" aria-label="Regular price $15">$15</span><span class="price-note">one-time · no subscription</span></div>
     <a class="btn btn-primary btn-block" id="checkoutBtn" target="_blank" rel="noopener">Get Pro — $9</a>
     <div class="trust-row"><span>One-time payment</span><span>No subscription</span><span>No account</span><span>Lifetime access to this version</span></div>
     <p class="tiny">Secure checkout via Gumroad · Your license key is emailed right after purchase.</p>
