@@ -13,3 +13,4 @@
 - 라이선스(2026-11-27 개편): Pro는 저장된 증거로만 판단(pro:true 무시). 관리자 키는 해시로 매번 확인. 검롯 키는 방문 때마다(10분에 1번까지) 재확인, 잘못된/환불/비활성 키는 Pro 끔, 서버·인터넷 오류로는 끄지 않음(마지막 확인 후 30일까지 오프라인 사용). 기기 등록(+1) 성공해야 Pro, 3대 넘으면 거절. 기기 수 초기화는 검롯 CLI `licenses decrement`로 대표 요청 시.
 - 백업 브랜치: backup-2026-11-27(개편 전 사이트). Pro 기능: 백업(.json)·복원, 복제, 번호 이어 매기기, 같은 번호 저장 시 덮어쓰기.
 - 서버 없는 한계(과장 금지): 코드 수정·검롯 요청 차단·시크릿 창/저장소 삭제로 무료 횟수·Pro를 완전히 막을 수 없음.
+- 묶음(2026-11-27, 대표 결정 방법 B): 묶음 상품 Swift Freelancer Kit(id 51hSZcZ0TpRMp9nudAF_Aw==, https://swiftbill4.gumroad.com/l/kit, 14달러). `BUNDLE_PRODUCT_ID` 키도 받음, 묶음 키는 같은 사이트 공유 저장소 `swiftkit.license.v1`로 SwiftReceipt와 함께 Pro(기기는 브라우저당 1번). 공유 키는 바뀔 때만 다시 씀(탭끼리 무한 확인 방지). 위쪽 [Invoices | Receipts] 전환 버튼, 480px 이하 남은 횟수 표시 숨김, Pro 창에 묶음 안내. 바꾸기 전 백업 브랜치: backup-before-bundle-2026-11-27. SwiftReceipt 저장소(seohn0228-jpg/swiftreceipt)가 SwiftBill 저장 내용(swiftbill.doc/history/profile.v1)을 읽어 영수증을 만드므로 저장 형식을 바꾸면 그쪽도 확인.

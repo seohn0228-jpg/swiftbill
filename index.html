@@ -82,6 +82,14 @@ img{max-width:100%}
   font-size:12px;color:var(--muted);padding-left:14px;margin-left:2px;
   border-left:1px solid var(--line);white-space:nowrap;
 }
+/* app switcher: SwiftBill (invoices) <-> SwiftReceipt (receipts), same site */
+.app-switch{display:flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--line);border-radius:10px;background:var(--line-soft);flex:none}
+.app-switch a{display:inline-flex;align-items:center;min-height:30px;padding:0 10px;border-radius:7px;font-size:12.5px;font-weight:650;color:var(--muted);text-decoration:none;white-space:nowrap}
+.app-switch a:hover{color:var(--ink)}
+.app-switch a[aria-current="page"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+@media (max-width:560px){.brand-name{display:none}}
+@media (max-width:480px){#statusPill{display:none}}
+@media (max-width:379px){.app-switch a{padding:0 7px;font-size:12px}}
 .header-right{margin-left:auto;display:flex;align-items:center;gap:10px;min-width:0}
 
 .pill{
@@ -668,7 +676,7 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
       </span>
       <span class="brand-name">SwiftBill</span>
     </span>
-    <span class="brand-tag">Invoice &amp; quote studio</span>
+    <nav class="app-switch" aria-label="Switch app"><a href="../swiftbill/" aria-current="page">Invoices</a><a href="../swiftreceipt/">Receipts</a></nav>
     <div class="header-right">
       <span class="pill" id="statusPill">3 free exports left</span>
       <button type="button" class="btn btn-primary btn-sm" id="unlockBtn"><span class="unlock-long">Unlock Pro — $9</span><span class="unlock-short">Pro — $9</span></button>
@@ -1022,6 +1030,7 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
     <a class="btn btn-primary btn-block" id="checkoutBtn" target="_blank" rel="noopener">Get Pro — $9</a>
     <div class="trust-row"><span>One-time payment</span><span>No subscription</span><span>No account</span><span>Lifetime access to this version</span></div>
     <p class="tiny">Secure checkout via Gumroad · Your license key is emailed right after purchase.</p>
+    <p class="tiny kit-offer">Need receipts too? <a href="https://swiftbill4.gumroad.com/l/kit" target="_blank" rel="noopener">Get SwiftBill + SwiftReceipt for $14</a> — one key unlocks both.</p>
     <div class="code-block">
       <label for="codeInput">Already purchased? Enter your license key</label>
       <div class="code-row">
@@ -1066,6 +1075,8 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
      GOATCOUNTER_CODE    visitor counter name from goatcounter.com (empty = off) */
   const CHECKOUT_URL = 'https://swiftbill4.gumroad.com/l/Pro';
   const GUMROAD_PRODUCT_ID = 'r_D8j14r5tISLeNkBdcCbg==';
+  const BUNDLE_PRODUCT_ID = '51hSZcZ0TpRMp9nudAF_Aw==';               /* Swift Freelancer Kit: SwiftBill Pro + SwiftReceipt Pro */
+  const BUNDLE_URL = 'https://swiftbill4.gumroad.com/l/kit';
   const CUSTOMER_CODES = [];
   /* owner test key: only its SHA-256 is stored here, the key itself is never in the source */
   const OWNER_CODE_HASHES = ['019dbb2694c964d5889b69efafd98d1492eb30ffbbe9b888d7df19c9874600c4'];
@@ -2043,8 +2054,8 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
 
   /* POST https://api.gumroad.com/v2/licenses/verify (product_id, license_key, increment_uses_count).
      Returns { kind: 'ok' | 'invalid' | 'revoked' | 'server' | 'network', uses } */
-  async function gumroadVerify(key, increment) {
-    const body = new URLSearchParams({ product_id: GUMROAD_PRODUCT_ID, license_key: key, increment_uses_count: increment ? 'true' : 'false' });
+  async function gumroadVerifyOne(pid, key, increment) {
+    const body = new URLSearchParams({ product_id: pid, license_key: key, increment_uses_count: increment ? 'true' : 'false' });
     let res, j = null;
     const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
     const timer = ctrl ? setTimeout(() => ctrl.abort(), VERIFY_TIMEOUT_MS) : null;
@@ -2063,6 +2074,32 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
     if (p.refunded || p.chargebacked || p.disputed) return { kind: 'revoked' };
     return { kind: 'ok', uses: Math.max(0, parseInt(j.uses, 10) || 0) };
   }
+  /* tries SwiftBill Pro, then the bundle; a key only belongs to one of them */
+  async function gumroadVerify(key, increment, onlyPid) {
+    const ids = onlyPid ? [onlyPid] : [GUMROAD_PRODUCT_ID, BUNDLE_PRODUCT_ID].filter(Boolean);
+    let last = { kind: 'invalid' };
+    for (const pid of ids) {
+      const r = await gumroadVerifyOne(pid, key, increment);
+      if (r.kind !== 'invalid') return Object.assign(r, { pid: pid });
+      last = r;
+    }
+    return last;
+  }
+  /* Swift Freelancer Kit (bundle): one license key unlocks SwiftBill and SwiftReceipt.
+     Both apps live on the same site, so a bundle key accepted in one app is shared through
+     this storage key and picked up by the other without counting the browser twice. */
+  const KIT_KEY = 'swiftkit.license.v1';
+  function readKit() {
+    try { const k = JSON.parse(localStorage.getItem(KIT_KEY) || 'null'); return (k && k.license && k.pid === BUNDLE_PRODUCT_ID) ? k : null; } catch (e) { return null; }
+  }
+  function writeKit(license, at) {
+    const k = readKit();
+    if (k && k.license === license) return;   /* already shared — rewriting would wake the other app's tab for nothing */
+    try { localStorage.setItem(KIT_KEY, JSON.stringify({ license: license, pid: BUNDLE_PRODUCT_ID, checkedAt: at || Date.now() })); } catch (e) {}
+  }
+  function clearKit(license) {
+    try { const k = readKit(); if (k && (!license || k.license === license)) localStorage.removeItem(KIT_KEY); } catch (e) {}
+  }
   async function sha256Hex(text) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
     return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -2072,9 +2109,10 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
     try { return OWNER_CODE_HASHES.indexOf(await sha256Hex(String(code).toUpperCase())) !== -1; } catch (e) { return false; }
   }
   function refreshAll() { syncEditor(); renderItems(); renderSheet(); updateChrome(); renderHistory(); }
-  function grantPro(key, src) {
+  function grantPro(key, src, pid) {
     proActive = true;
-    flags.pro = true; flags.license = key; flags.src = src; flags.checkedAt = Date.now();
+    flags.pro = true; flags.license = key; flags.src = src; flags.pid = pid || ''; flags.checkedAt = Date.now();
+    if (src === 'gumroad' && pid === BUNDLE_PRODUCT_ID) writeKit(key, flags.checkedAt);
     save(K_FLAGS, flags);
     closeModals(); refreshAll();
     toast('Pro unlocked — unlimited exports, no credit.');
@@ -2082,8 +2120,9 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
   }
   function revokePro(message) {
     const was = proActive;
+    if (flags.pid === BUNDLE_PRODUCT_ID && message) clearKit(flags.license);   /* refunded/disabled bundle key: drop it for both apps */
     proActive = false;
-    flags.pro = false; flags.license = ''; flags.src = ''; flags.checkedAt = 0;
+    flags.pro = false; flags.license = ''; flags.src = ''; flags.pid = ''; flags.checkedAt = 0;
     save(K_FLAGS, flags);
     refreshAll();
     if (was && message) toast(message);
@@ -2110,15 +2149,16 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
       if (CUSTOMER_CODES.indexOf(code.toUpperCase()) !== -1) { grantPro(code.toUpperCase(), 'code'); return; }
       if (await isOwnerCode(code)) { grantPro(code.toUpperCase(), 'owner'); return; }
       if (!GUMROAD_PRODUCT_ID) { err.textContent = KEY_MSG.invalid; return; }
-      const same = flags.src === 'gumroad' && flags.license === code;   /* this browser already counted */
+      const kit = readKit();
+      const same = (flags.src === 'gumroad' && flags.license === code) || (kit && kit.license === code);   /* this browser already counted */
       const r = await gumroadVerify(code, false);
       if (r.kind !== 'ok') { err.textContent = KEY_MSG[r.kind] || KEY_MSG.invalid; track('license-' + r.kind); return; }
-      if (same) { grantPro(code, 'gumroad'); return; }
+      if (same) { grantPro(code, 'gumroad', r.pid); return; }
       if (r.uses >= MAX_DEVICES) { err.textContent = KEY_MSG.devices; track('license-devices'); return; }
-      const inc = await gumroadVerify(code, true);                      /* count this device */
+      const inc = await gumroadVerify(code, true, r.pid);              /* count this device */
       if (inc.kind !== 'ok') { err.textContent = inc.kind === 'revoked' ? KEY_MSG.revoked : (inc.kind === 'invalid' ? KEY_MSG.invalid : KEY_MSG.register); track('license-register-' + inc.kind); return; }
       if (inc.uses > MAX_DEVICES) { err.textContent = KEY_MSG.devices; track('license-devices'); return; }  /* lost a race with another device */
-      grantPro(code, 'gumroad');
+      grantPro(code, 'gumroad', r.pid);
     } finally {
       codeBusy = false; btn.disabled = false; btn.textContent = label;
     }
@@ -2127,6 +2167,11 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
      (at most every 10 min). Refunded/disabled/unknown keys lose Pro; network/server trouble keeps Pro for up to
      30 days after the last good check. */
   async function initLicense() {
+    /* a bundle key unlocked in SwiftReceipt on this browser unlocks SwiftBill too */
+    if (!flags.license || flags.src !== 'gumroad') {
+      const kit = (flags.src === 'owner' || flags.src === 'code') ? null : readKit();
+      if (kit) { flags.license = kit.license; flags.src = 'gumroad'; flags.pid = kit.pid; flags.checkedAt = +kit.checkedAt || 0; save(K_FLAGS, flags); }
+    }
     const lic = String(flags.license || '');
     if (flags.src === 'owner') { proActive = await isOwnerCode(lic); if (!proActive) revokePro(''); refreshAll(); return; }
     if (flags.src === 'code') { proActive = CUSTOMER_CODES.indexOf(lic.toUpperCase()) !== -1; if (!proActive) revokePro(''); refreshAll(); return; }
@@ -2138,12 +2183,24 @@ select{min-width:0;max-width:100%;text-overflow:ellipsis}
     try { lastTry = +sessionStorage.getItem('swiftbill.licCheck') || 0; } catch (e) {}
     if (Date.now() - lastTry < RECHECK_MS && proActive) return;
     try { sessionStorage.setItem('swiftbill.licCheck', String(Date.now())); } catch (e) {}
-    const r = await gumroadVerify(lic, false);
-    if (r.kind === 'ok') { flags.checkedAt = Date.now(); save(K_FLAGS, flags); if (!proActive) { proActive = true; refreshAll(); } return; }
+    const known = (flags.pid === GUMROAD_PRODUCT_ID || flags.pid === BUNDLE_PRODUCT_ID) ? flags.pid : undefined;
+    const r = await gumroadVerify(lic, false, known);
+    if (r.kind === 'ok') { flags.checkedAt = Date.now(); if (r.pid) flags.pid = r.pid; save(K_FLAGS, flags); if (flags.pid === BUNDLE_PRODUCT_ID) writeKit(lic, flags.checkedAt); if (!proActive) { proActive = true; refreshAll(); } return; }
     if (r.kind === 'invalid' || r.kind === 'revoked') { revokePro('Your Pro license is no longer active (refunded or disabled). Questions? ' + CONTACT_EMAIL); track('license-revoked'); return; }
     /* network / server trouble */
     if (!proActive && last > 0) toast('Couldn’t confirm your Pro license — connect to the internet and reopen SwiftBill.');
   }
+  /* SwiftReceipt open in another tab unlocked (or dropped) the bundle key */
+  window.addEventListener('storage', e => {
+    if (e.key === KIT_KEY) {
+        let nk = null; try { nk = JSON.parse(e.newValue || 'null'); } catch (x) {}
+        const nl = nk && nk.license ? nk.license : '';
+        const mine = flags.pid === BUNDLE_PRODUCT_ID ? String(flags.license || '') : '';
+        if (nl === mine) return;                       /* nothing changed for this app */
+        if (!nl && mine) { revokePro(''); return; }      /* the other app found the bundle key refunded/disabled */
+        if (nl && !proActive) { try { sessionStorage.removeItem('swiftbill.licCheck'); } catch (x) {} initLicense(); }
+      }
+  });
 
   /* ───────────── view tabs (phones) ───────────── */
   function setView(v) {
